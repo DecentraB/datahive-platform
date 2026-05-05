@@ -19,8 +19,6 @@ The MVP should stay simple:
 - Kafka/Kafka Connect only inside products that need streaming or CDC
 - Dagster and Ray only inside products or domains that need them
 
-Spark is not part of the default ETL path. Prefer source-aligned ingestion products, warehouse-native SQL transformations, and optional Ray for AI/ML workloads.
-
 ## 2. Design Principles
 
 1. **Product ownership first**
@@ -33,10 +31,10 @@ Spark is not part of the default ETL path. Prefer source-aligned ingestion produ
    Use Kubernetes namespaces, service accounts, RBAC, quotas, network policies, StarRocks databases/roles, Polaris namespaces, and storage prefixes/buckets. Add separate physical clusters only when scale, compliance, cost, or blast-radius requirements justify them.
 
 4. **Warehouse-native ETL by default**
-   Operational sources land into bronze through source-aligned ingestion products. Silver and gold transformations are SQL-first through StarRocks and dbt or equivalent tooling.
+   Operational sources land into bronze through source-aligned ingestion products. Silver models are cleaned, standardized, and reusable. Gold models are consumption-ready. Aggregate products publish silver outputs. Constructor products may publish silver or gold outputs depending on whether their outputs are reusable intermediate models or consumption-ready business models. Consumer-aligned products serve specific consuming applications or workflows through gold outputs. Transformations are SQL-first through StarRocks and dbt or equivalent tooling.
 
 5. **No premature control plane**
-   Crossplane and multiple FluxCD instances are not MVP defaults. Add them only when there is a concrete operational need.
+   Multiple Kubernetes clusters and FluxCD instances are not MVP defaults. Add them only when there is a concrete operational need.
 
 ## 3. Data Product Types
 
@@ -45,9 +43,9 @@ DataHive uses explicit data product types. These types describe ownership and in
 | Type | Purpose | Owns | Does not own |
 | --- | --- | --- | --- |
 | Source-aligned data product | Publishes data from an operational source into the lake. | Source contract, ingestion runtime, bronze tables, source quality checks. | Cross-source business logic or consumer-specific shaping. |
-| Aggregate data product | Groups multiple existing streams/tables and exposes them together without changing business meaning or constructing new values. | Combined access surface, contracts, documentation, lifecycle. | Business transformations or new metrics. |
-| Constructor data product | Constructs new data values, derived entities, metrics, or business insights. | Transformation logic, dbt models, silver/gold outputs, quality rules, contracts. | Raw source capture unless it is also explicitly source-aligned. |
-| Consumer-aligned data product | Shapes data for a specific end use, application, team, dashboard, feature, or workflow. | Consumer-facing outputs, usability guarantees, access policy, SLOs. | Upstream source or enterprise-wide canonical definitions unless explicitly delegated. |
+| Aggregate data product | Groups multiple existing streams/tables and exposes them together without changing business meaning or constructing new values. | Silver grouped outputs, combined access surface, contracts, documentation, lifecycle. | Business transformations, new metrics, or gold consumer outputs. |
+| Constructor data product | Constructs new data values, derived entities, metrics, or business insights. | Transformation logic, dbt models, silver or gold outputs, quality rules, contracts. | Raw source capture unless it is also explicitly source-aligned, or consumer-specific shaping unless explicitly delegated. |
+| Consumer-aligned data product | Shapes and serves data for a specific end use, application, team, dashboard, feature, or workflow. | Consumer-facing gold outputs, usability guarantees, access policy, SLOs. | Upstream source, reusable silver construction, or enterprise-wide canonical definitions unless explicitly delegated. |
 
 Important distinction:
 
@@ -57,7 +55,7 @@ Important distinction:
 
 ## 4. Standards
 
-DataHive should conform to existing open standards instead of inventing detailed custom product schemas in this document.
+DataHive conforms to existing open standards instead of inventing detailed custom product schemas in this document.
 
 | Concern | Standard |
 | --- | --- |
@@ -68,7 +66,7 @@ DataHive should conform to existing open standards instead of inventing detailed
 | SQL transformation project structure | dbt conventions or equivalent SQL model tooling |
 | Metadata discovery and governance | OpenMetadata entities, domains, ownership, lineage, and glossary |
 
-Detailed ODPS extensions, validation schemas, and examples should live in a separate specification document.
+Detailed ODPS extensions, validation schemas, and examples live in a separate specification document.
 
 ## 5. Component Ownership
 
@@ -78,7 +76,7 @@ The platform team should operate the minimum shared substrate:
 
 - Kubernetes cluster
 - FluxCD
-- External Secrets Operator or equivalent secrets integration
+- Hashicorp Vault
 - Kyverno or OPA policy
 - Ceph RGW or another S3-compatible object store
 - Apache Polaris
@@ -93,7 +91,7 @@ These components are shared because they are expensive or confusing to duplicate
 
 The following should be owned by the data product that needs them:
 
-- Kafka brokers or Kafka-compatible runtime, when streaming is needed
+- Kafka brokers, when streaming is needed
 - Kafka Connect workers and connector configs, when CDC or streaming ingestion is needed
 - dbt project and transformation models
 - Dagster deployment or definitions, when orchestration is needed
@@ -115,19 +113,25 @@ flowchart LR
     Source["Operational Source"] --> SourceDP["Source-Aligned Data Product"]
     SourceDP --> Bronze["Bronze Iceberg Tables"]
     Bronze --> AggregateDP["Aggregate Data Product<br/>(optional grouping, no new values)"]
-    Bronze --> ConstructorDP["Constructor Data Product<br/>(new values / insights)"]
-    AggregateDP --> ConstructorDP
-    ConstructorDP --> Gold["Gold / Curated Outputs"]
-    Gold --> ConsumerDP["Consumer-Aligned Data Product"]
-    ConsumerDP --> Consumers["BI / Apps / Notebooks / APIs"]
+    Bronze --> ConstructorSilverDP["Constructor Data Product<br/>(reusable derived models)"]
+    AggregateDP --> Silver["Silver / Clean Reusable Models"]
+    ConstructorSilverDP --> Silver
+    Silver --> ConstructorGoldDP["Constructor Data Product<br/>(business models / insights)"]
+    Silver --> ConsumerDP["Consumer-Aligned Data Product<br/>(use-case serving)"]
+    ConstructorGoldDP --> Gold["Gold / Consumption-Ready Outputs"]
+    ConsumerDP --> Gold
+    Gold --> Consumers["BI / Apps / Notebooks / APIs"]
 ```
 
 Notes:
 
 - Kafka/Kafka Connect is an implementation choice inside a source-aligned data product, not a shared platform ingestion layer.
+- Medallion layers describe data model maturity. Data product types describe ownership and intent, so they do not map one-to-one to layers.
 - Aggregate products do not create new business values. If they do, they become constructor products.
-- Constructor products should use StarRocks SQL and dbt or equivalent tooling by default.
-- Consumer-aligned products optimize data for a specific use case and can depend on source-aligned, aggregate, or constructor products.
+- Aggregate products publish reusable silver outputs by default.
+- Constructor products should use StarRocks SQL and dbt or equivalent tooling by default. They may publish reusable silver outputs for other data products, or consumption-ready gold outputs when they create business models, metrics, or insights that can be served directly.
+- Consumer-aligned products optimize and serve data for a specific use case. They depend on cleaned silver models, including reusable constructor outputs, and publish consumer-facing gold outputs.
+- Bronze-to-gold transformation should be treated as an anti-pattern by default. Gold outputs should be built from cleaned, validated silver models unless a documented exception is accepted.
 
 ## 7. Platform Architecture
 
@@ -137,7 +141,7 @@ flowchart TB
         Cluster["Kubernetes"]
         Bootstrap["Terragrunt"]
         Flux["FluxCD"]
-        SecretsBase["Secrets Backend"]
+        Vault["Hashicorp Vault"]
     end
 
     subgraph Shared["Shared Substrate"]
@@ -173,15 +177,11 @@ flowchart TB
 
 ## 8. Repository Boundaries
 
-Keep repository structure simple for MVP.
-
 | Repository | Purpose |
 | --- | --- |
 | Platform blueprints | Reusable Helm charts, templates, CI templates, policies, and bootstrap scripts. |
 | Platform registry | Organization, environments, domains, shared substrate configuration, and access policy. |
 | Domain/product repos | ODPS product metadata, ODCS contracts, dbt models, optional runtime configs, quality checks, docs, and deployment values. |
-
-Avoid putting detailed product schemas or long YAML examples in this architecture document. Product schema details belong in a dedicated ODPS/ODCS profile document.
 
 ## 9. MVP Scope
 
@@ -203,27 +203,6 @@ Implement first:
 
 Aggregate products can be supported by the same product template once product type metadata and ownership rules are clear.
 
-## 10. Non-Goals for MVP
-
-Do not implement in MVP:
-
-- Spark as a default ETL runtime
-- global shared Kafka ingestion platform
-- global shared Kafka Connect worker pool
-- global shared Dagster orchestration plane
-- mandatory Ray runtime
-- multiple FluxCD instances
-- Crossplane control-plane abstractions
-- per-product physical Polaris, StarRocks, OpenMetadata, or object-storage clusters
-- Trino
-- Nessie
-- Hive Metastore
-- custom SQL UI inside OpenMetadata
-- semantic layer
-- ML feature store
-- automatic data access approval workflow
-- advanced cost optimization
-
 ## 11. Default Stack
 
 | Layer | Default |
@@ -243,13 +222,3 @@ Do not implement in MVP:
 | GitOps | FluxCD |
 | Policy | Kyverno or OPA |
 | Observability | Prometheus, Grafana, Loki, OpenTelemetry |
-
-## 12. References
-
-- ODPS v1.0.0: https://bitol-io.github.io/open-data-product-standard/v1.0.0/
-- Apache Kafka Connect: https://kafka.apache.org/42/kafka-connect/
-- Apache Iceberg Kafka Connect sink: https://iceberg.apache.org/docs/1.10.0/kafka-connect/
-- StarRocks Iceberg catalog: https://docs.starrocks.io/docs/data_source/catalog/iceberg/iceberg_catalog/
-- StarRocks dbt integration: https://docs.starrocks.io/docs/integrations/dbt/
-- Ray Data: https://docs.ray.io/en/latest/data/data.html
-
