@@ -5,11 +5,11 @@ Use this file as a quick navigation guide. Do not treat it as the source of proj
 ## Where To Look
 
 - Start with `README.md` for the current architecture overview, vocabulary, product taxonomy, MVP scope, and default stack.
-- Check `docs/*.md` for Architecture Decision Records before changing architectural direction.
-- Use `adr list` to see recorded decisions. ADR storage is configured by `.adr-dir` and currently points to `docs`.
+- Check `docs/adr/*.md` for Architecture Decision Records before changing architectural direction.
+- Use `adr list` to see recorded decisions. ADR storage is configured by `.adr-dir` and currently points to `docs/adr`.
 - Use repository search for details instead of guessing:
-  - `rg "<term>" README.md docs`
-  - `find docs -maxdepth 1 -type f -name '*.md' -print`
+  - `rg "<term>" README.md docs/adr`
+  - `find docs/adr -maxdepth 1 -type f -name '*.md' -print`
 
 ## ADR Workflow
 
