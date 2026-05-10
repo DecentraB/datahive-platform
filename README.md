@@ -7,7 +7,7 @@ DataHive is a self-service data product platform for domain teams. It should hel
 The MVP should stay simple:
 
 - one Kubernetes platform cluster
-- one FluxCD installation
+- one ArgoCD installation
 - shared substrate services where sharing is clearly useful
 - data-product-owned runtime components where ownership matters
 - ODPS for data product metadata
@@ -25,7 +25,7 @@ The MVP should stay simple:
    Data products own their data, runtime choices, contracts, quality checks, documentation, and lifecycle. The shared platform provides substrate and templates, not product-specific pipeline ownership.
 
 2. **Share substrate, not product logic**
-   It is reasonable to share Kubernetes, FluxCD, object storage, Polaris, StarRocks, OpenMetadata, secrets integration, policy, and observability. It is not reasonable for the shared platform to own source ingestion logic, Kafka topics, connector configs, dbt models, Dagster graphs, or product-specific Ray jobs.
+   It is reasonable to share Kubernetes, ArgoCD, object storage, Polaris, StarRocks, OpenMetadata, secrets integration, policy, and observability. It is not reasonable for the shared platform to own source ingestion logic, Kafka topics, connector configs, dbt models, Dagster graphs, or product-specific Ray jobs.
 
 3. **Start with logical isolation**
    Use Kubernetes namespaces, service accounts, RBAC, quotas, network policies, StarRocks databases/roles, Polaris namespaces, and storage prefixes/buckets. Add separate physical clusters only when scale, compliance, cost, or blast-radius requirements justify them.
@@ -34,7 +34,7 @@ The MVP should stay simple:
    Operational sources land into bronze through source-aligned ingestion products. Silver models are cleaned, standardized, and reusable. Gold models are consumption-ready. Aggregate products publish silver outputs. Constructor products may publish silver or gold outputs depending on whether their outputs are reusable intermediate models or consumption-ready business models. Consumer-aligned products serve specific consuming applications or workflows through gold outputs. Transformations are SQL-first through StarRocks and dbt or equivalent tooling.
 
 5. **No premature control plane**
-   Multiple Kubernetes clusters and FluxCD instances are not MVP defaults. Add them only when there is a concrete operational need.
+   Multiple Kubernetes clusters and ArgoCD instances are not MVP defaults. Add them only when there is a concrete operational need.
 
 ## 3. Data Product Types
 
@@ -75,7 +75,7 @@ Detailed ODPS extensions, validation schemas, and examples live in a separate sp
 The platform team should operate the minimum shared substrate:
 
 - Kubernetes cluster
-- FluxCD
+- ArgoCD
 - Hashicorp Vault
 - Kyverno or OPA policy
 - Ceph RGW or another S3-compatible object store
@@ -139,8 +139,7 @@ Notes:
 flowchart TB
     subgraph Foundation["Foundational Infrastructure"]
         Cluster["Kubernetes"]
-        Bootstrap["Terragrunt"]
-        Flux["FluxCD"]
+        ArgoCD["ArgoCD"]
         Vault["Hashicorp Vault"]
     end
 
@@ -163,8 +162,8 @@ flowchart TB
         Quality["Quality Checks"]
     end
 
-    Flux --> Shared
-    Flux --> Products
+    ArgoCD --> Shared
+    ArgoCD --> Products
     Templates --> Products
     Products --> ObjectStore
     Products --> Polaris
@@ -187,7 +186,7 @@ flowchart TB
 
 Implement first:
 
-1. Kubernetes and FluxCD bootstrap
+1. Kubernetes and ArgoCD bootstrap
 2. Platform registry and domain onboarding
 3. Domain namespace, RBAC, quotas, and secrets integration
 4. Shared object storage, Polaris, StarRocks, OpenMetadata, policy, and observability
@@ -219,6 +218,6 @@ Aggregate products can be supported by the same product template once product ty
 | Iceberg catalog | Apache Polaris |
 | Warehouse / serving | StarRocks |
 | Metadata catalog | OpenMetadata |
-| GitOps | FluxCD |
+| GitOps | ArgoCD |
 | Policy | Kyverno or OPA |
 | Observability | Prometheus, Grafana, Loki, OpenTelemetry |
