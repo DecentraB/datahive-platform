@@ -11,6 +11,18 @@ Use this file as a quick navigation guide. Do not treat it as the source of proj
   - `rg "<term>" README.md docs/adr`
   - `find docs/adr -maxdepth 1 -type f -name '*.md' -print`
 
+## Related Repositories
+
+These repositories are related but independently cloned. Do not assume local sibling paths exist. If a path is needed, check it first with `test -d <path>` and confirm the remote with `git -C <path> remote -v` when identity matters.
+
+| Repository | Purpose | Canonical URL | Possible Local Path |
+| --- | --- | --- | --- |
+| datahive | Architecture, vocabulary, ADRs, platform purpose | git@github.com:DecentraB/datahive.git | `.` |
+| datahive-blueprints | Reusable Terraform modules, Helm charts, templates, policies, and bootstrap assets | git@github.com:DecentraB/datahive-blueprints.git | `../datahive-blueprints` |
+| datahive-registry | Environments, domains, shared substrate configuration, access policy, and onboarding | git@github.com:DecentraB/datahive-registry.git | `../datahive-registry` |
+
+Use related repositories as implementation context. Keep architectural truth in this repo unless an ADR or README explicitly delegates detail elsewhere.
+
 ## ADR Workflow
 
 - Manage ADRs with the installed `adr` CLI.
