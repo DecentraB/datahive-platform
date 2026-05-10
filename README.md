@@ -9,7 +9,7 @@ The MVP should stay simple:
 - one Kubernetes platform cluster
 - one ArgoCD installation
 - shared substrate services where sharing is clearly useful
-- data-product-owned runtime components where ownership matters
+- data-domain-owned runtime components where ownership matters
 - ODPS for data product metadata
 - ODCS for output-port data contracts
 - Iceberg tables on S3-compatible object storage
@@ -87,7 +87,7 @@ The platform team should operate the minimum shared substrate:
 
 These components are shared because they are expensive or confusing to duplicate per product and can be isolated logically.
 
-### 5.2 Product-Owned Runtime
+### 5.2 Domain-Owned Runtime
 
 The following should be owned by the data product that needs them:
 
@@ -153,7 +153,7 @@ flowchart TB
         Templates["Runtime Templates"]
     end
 
-    subgraph Products["Product-Owned Runtime"]
+    subgraph Domains["Domain-Owned Runtime"]
         IngestionRuntime["Optional Kafka / Kafka Connect"]
         SQLModels["dbt / SQL Models"]
         Dagster["Optional Dagster"]
@@ -163,23 +163,23 @@ flowchart TB
     end
 
     ArgoCD --> Shared
-    ArgoCD --> Products
-    Templates --> Products
-    Products --> ObjectStore
-    Products --> Polaris
-    Products --> StarRocks
-    Products --> OpenMetadata
-    Policy --> Products
+    ArgoCD --> Domains
+    Templates --> Domains
+    Domains --> ObjectStore
+    Domains --> Polaris
+    Domains --> StarRocks
+    Domains --> OpenMetadata
+    Policy --> Domains
     Observability --> Shared
-    Observability --> Products
+    Observability --> Domains
 ```
 
 ## 8. Repository Boundaries
 
 | Repository | Purpose |
 | --- | --- |
-| Platform blueprints | Reusable Helm charts, templates, CI templates, policies, and bootstrap scripts. |
-| Platform registry | Organization, environments, domains, shared substrate configuration, and access policy. |
+| datahive-blueprints | Reusable Helm charts, templates, CI templates, policies, and bootstrap scripts. |
+| datahive-registry | Organization, environments, domains, shared substrate configuration, and access policy. |
 | Domain/product repos | ODPS product metadata, ODCS contracts, dbt models, optional runtime configs, quality checks, docs, and deployment values. |
 
 ## 9. MVP Scope
@@ -195,9 +195,9 @@ Implement first:
 7. Source-aligned product template
 8. Constructor product template using StarRocks SQL and dbt
 9. Consumer-aligned product template
-10. Optional product-owned Kafka/Kafka Connect template
-11. Optional product-owned Dagster template
-12. Optional product-owned Ray template
+10. Optional domain-owned Kafka/Kafka Connect template
+11. Optional domain-owned Dagster template
+12. Optional domain-owned Ray template
 13. Basic lineage, quality, and freshness reporting into OpenMetadata
 
 Aggregate products can be supported by the same product template once product type metadata and ownership rules are clear.
@@ -209,10 +209,10 @@ Aggregate products can be supported by the same product template once product ty
 | Data product metadata | ODPS v1.0.0 |
 | Data contracts | ODCS |
 | Ingestion ownership | Source-aligned data products |
-| Streaming/CDC runtime | Product-owned Kafka/Kafka Connect when needed |
+| Streaming/CDC runtime | Domain-owned Kafka/Kafka Connect when needed |
 | Transformation | StarRocks SQL with dbt or equivalent |
-| AI/ML runtime | Product-owned Ray when needed |
-| Orchestration | Product-owned or domain-owned Dagster when needed |
+| AI/ML runtime | Domain-owned Ray when needed |
+| Orchestration | Domain-owned or domain-owned Dagster when needed |
 | Table format | Apache Iceberg |
 | Lake storage | Ceph RGW / S3-compatible storage |
 | Iceberg catalog | Apache Polaris |
