@@ -20,11 +20,9 @@ Use StarRocks as the warehouse, SQL transformation engine, and serving/query lay
 
 Use OpenMetadata as the metadata catalog for discovery, ownership, governance, and lineage.
 
-Do not include Trino, Nessie, or Hive Metastore in the MVP.
-
 ## Consequences
 
-The MVP has a clear and coherent lakehouse substrate.
+The platform has a clear and coherent lakehouse substrate.
 
 StarRocks integration with Iceberg and dbt becomes a critical path.
 

@@ -1,4 +1,4 @@
-# 4. Keep product runtimes owned by products or domains
+# 4. Use shared platform runtimes on shared substrate
 
 Date: 2026-05-04
 
@@ -8,22 +8,57 @@ Accepted
 
 ## Context
 
-Kafka, Kafka Connect, Dagster, and Ray can easily become shared platform services that own product-specific behavior. That would blur ownership, create coordination problems between products, and make failures or configuration conflicts harder to attribute.
+The platform is on-premise and should start with an architecture that is operationally simple, cost-efficient, and easy to evolve.
+
+Running separate infrastructure stacks or runtime systems per product or domain would significantly increase operational overhead, infrastructure duplication, and operational inconsistency before there is a proven need for stronger isolation.
+
+Most data and compute runtimes support multi-tenancy and logical isolation well enough for the current scale and risk profile.
 
 ## Decision
 
-Keep product runtimes owned by the product that needs them.
+Use a shared Kubernetes platform cluster and a shared Argo CD installation.
 
-Kafka/Kafka Connect should run inside source-aligned products when streaming or CDC is needed. Dagster and Ray should run inside products or domains that need orchestration or AI/ML workloads.
+Operate the following as centrally managed shared platform services:
 
-The platform may provide templates, operators, CI checks, and observability conventions, but it must not own product-specific topics, connector configs, orchestration graphs, or Ray jobs.
+* Celph object storage
+* Polaris
+* StarRocks
+* OpenMetadata
+* Apache Kafka brokers
+* Kafka Connect worker pools
+* Dagster
+* Ray clusters
+* dbt execution environments
+* observability
+* secrets integration
+* policy integration
 
-Domain-level sharing is allowed only when the domain explicitly owns the coupling and operational risk.
+Use logical isolation through:
+
+* Kubernetes namespaces
+* RBAC
+* quotas
+* network policies
+* workload queues and concurrency limits
+* StarRocks databases and roles
+* storage prefixes or buckets
+* Kafka ACLs and topic naming conventions
+
+Do not introduce:
+
+* separate runtime installations per product
+* multiple Argo CD instances
+* Crossplane (unless it becomes necessary to manage non-Kubernetes infrastructure)
+* physical isolation per domain
+
+until there is a concrete operational, compliance, scale, or blast-radius requirement.
 
 ## Consequences
 
-This improves modularity, ownership, and blast-radius control.
+This keeps the platform smaller and easier to operate.
 
-It may create more runtime instances than a centralized platform would.
+Shared runtimes improve infrastructure utilization, standardization, observability consistency, and operational efficiency.
 
-The platform must provide good templates and guardrails so product-owned runtimes remain operable.
+Logical isolation may not satisfy future compliance or fault-isolation requirements.
+
+Dedicated runtime deployments can be introduced later when justified by operational or organizational needs.

@@ -14,13 +14,13 @@ Most bronze-to-silver-to-gold transformations can be expressed in SQL and execut
 
 Use StarRocks SQL with dbt or equivalent SQL model tooling as the default transformation path.
 
-Operational ingestion should be handled by source-aligned products. Streaming or CDC products may use product-owned Kafka/Kafka Connect to publish bronze Iceberg tables.
+Operational ingestion should be handled by source-aligned products. Source-aligned products use substrate-managed Kafka and substrate-managed Kafka Connect for streaming or CDC by default, while owning ingestion intent, source contracts, connector declarations, quality, and lifecycle.
 
 Use Ray for AI/ML workloads when SQL is not a good fit. Spark is not part of the default ETL path.
 
 ## Consequences
 
-The MVP stack is simpler and SQL-first.
+The stack is simpler and SQL-first.
 
 Transformation lineage, tests, and documentation can follow dbt conventions.
 
