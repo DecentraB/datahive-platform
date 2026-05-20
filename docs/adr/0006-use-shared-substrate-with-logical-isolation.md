@@ -20,24 +20,24 @@ Shared platform runtimes do not imply shared ownership of workloads.
 
 Domain and product teams remain responsible for their own:
 
-* dbt projects and models
-* Dagster jobs, schedules, and orchestration graphs
-* Ray jobs and ML workloads
-* Kafka topics and schemas
-* data contracts
-* SLAs
-* data quality rules
-* deployment lifecycle
+- dbt projects and models
+- Dagster jobs, schedules, and orchestration graphs
+- Ray jobs and ML workloads
+- Kafka topics and schemas
+- data contracts
+- SLAs
+- data quality rules
+- deployment lifecycle
 
 The platform team owns only the shared runtime infrastructure and platform capabilities, including:
 
-* runtime provisioning
-* scaling
-* upgrades
-* observability infrastructure
-* access control frameworks
-* operational guardrails
-* templates and CI/CD patterns
+- runtime provisioning
+- scaling
+- upgrades
+- observability infrastructure
+- access control frameworks
+- operational guardrails
+- templates and CI/CD patterns
 
 The platform team must not own or directly manage product-specific business logic or pipelines.
 

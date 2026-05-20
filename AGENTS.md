@@ -34,4 +34,6 @@ Use related repositories as implementation context. Keep architectural truth in 
 
 - Keep `README.md` high-level. Do not add long YAML examples or detailed product schemas there.
 - Put detailed product profiles, schemas, and implementation design in separate docs.
-- Preserve the current ownership principle: shared substrate is platform-owned; product-specific runtimes and logic are product-owned or domain-owned.
+- Preserve the current ownership principle: shared substrate infrastructure is platform-owned; product-specific logic is product-owned or domain-owned.
+- Treat Kafka brokers and Kafka Connect workers as substrate-managed infrastructure by default; keep source-specific ingestion logic and contracts product-owned.
+- Do not describe a landing zone as a business capability. Domains correspond to business capabilities; one landing zone may contain multiple domains.
