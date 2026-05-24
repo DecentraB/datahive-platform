@@ -1,0 +1,9 @@
+cluster_name = "datahive"
+
+namespace     = "argocd"
+release_name  = "argocd"
+chart_version = "9.5.13"
+
+timeout = 1800
+
+extra_values = {}

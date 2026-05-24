@@ -1,0 +1,11 @@
+namespace     = "vault"
+release_name  = "vault"
+chart_version = "0.32.0"
+timeout       = 1800
+extra_values = {
+  server = {
+    dev = {
+      enabled = true
+    }
+  }
+}
